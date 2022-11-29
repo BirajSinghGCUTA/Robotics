@@ -29,6 +29,8 @@ theTime = 0
 wanderMode = False
 followWallMode = False
 
+theMinus = 1
+
 # def followWall():
 #     left_motor.run(200)
 #     right_motor.run(200)
@@ -50,7 +52,7 @@ def followWall(speed=200):
     """
 
     # These are the variables that are used in the PID controller.
-    propotional_gain = 2.0
+    propotional_gain = 0.8
     integral_gain = 0.1
     derevative_gain = 0.01
 
@@ -77,25 +79,29 @@ def followWall(speed=200):
 
 
 def wander(theVal):
-    # left_motor.run(300 + int(1.8*theVal))
-    # right_motor.run(300 - int(1.3*theVal))
+    left_motor.run(300+int(0.8*theVal))
+    right_motor.run(300-int(0.8*theVal))
 
-    left_motor.run(300)
-    right_motor.run(200 + theVal)
-
-    
+    # left_motor.run(200 + theVal)
+    # right_motor.run(200 + theVal)
 
 
 def foundWall():
     print(eyes.distance())
-    if eyes.distance() < 55:
+    if eyes.distance() < 50:
         return True
     else:
         return False
 
+def buttonPressed():
+    if r_touch.pressed() is True and l_touch.pressed() is True:
+        return True
+    else:
+        return False
+
+thelastval = 0
 
 while True:
-
     foundCol = sense_color()
     if foundCol:
         left_motor.stop()
@@ -103,9 +109,15 @@ while True:
         ev3.speaker.say("Fire. Fire. Firee")
         break
 
-    if theTime == 400:
+    if theTime == 350:
         theTime = 0
-        theVal = random.randint(0, 100)
+        if thelastval >= 0:
+            theVal = -1*random.randint(100, 200)
+            thelastval = theVal
+        else:
+            theVal = random.randint(100, 200)
+            thelastval = theVal
+        
     else:
         theTime += 1
 
@@ -116,15 +128,15 @@ while True:
     else:
         wander(theVal)
 
-    if r_touch.pressed() is True and l_touch.pressed() is True:
+    check = buttonPressed()
+    if check:
         left_motor.run_time(-260, 1000, wait=False)
         right_motor.run_time(-260, 1000)
         if eyes.distance() < 100:
-            left_motor.run_angle(200,465, wait=False)
+            left_motor.run_angle(200, 465, wait=False)
             right_motor.run_angle(200,-465, wait=True)
         else:
             left_motor.run_angle(200,-465, wait=False)
-            right_motor.run_angle(200,+465, wait=True)
-        
-
+            right_motor.run_angle(200, 465, wait=True)
+            
     wait(10)
