@@ -1,0 +1,7 @@
+the main loop and the logic will be separate files. 
+the main loop will make use of a logic object to run the robot
+
+the execution of the main loop shall be as follows:
+while true:
+  if the color sensor finds color, interrupt and send info to the logic logic.foundBlock(leftoverstring), backup to center of previous block and logic.getNextString()
+  
