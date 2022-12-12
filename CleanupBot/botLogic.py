@@ -22,10 +22,12 @@ class botLogic:
     self.goalR = (0,6) 
     self.goalB = (6,0)
     self.start = (1,3)
-    self.area = [[self.Tile(j,i) for j in range(COLUMNS)] for i in range(ROWS)]
+    self.primes = [[2, 3, 5, 7, 11, 13, 17], [19, 23, 29, 31, 37, 41, 43], [47, 53, 59, 61, 67, 71, 73], [79, 83, 89, 97, 101, 103, 107], [109, 113, 127, 131, 137, 139, 149], [151, 157, 163, 167, 173, 179, 181], [191, 193, 197, 199, 211, 223, 227]]
+    self.area = [[self.Tile(j,i, self.primes[i][j]) for j in range(COLUMNS)] for i in range(ROWS)]
     self.area[self.goalR[1]][self.goalR[0]].isGoal = RED
     self.area[self.goalB[1]][self.goalB[0]].isGoal = BLUE
     self.area[self.start[1]][self.start[0]].isCurrent = True
+    self.walkableEdges = []
   
   def __str__(self) -> str:
     res = ""
@@ -34,8 +36,11 @@ class botLogic:
         print('\t'.join(map(str, i)))
     return res
   
+  def isWalkablePath(self, _x, _y, x, y):
+    return self.area[y][x].prime * self.area[_y][_x].prime in self.walkableEdges
+
   def update(self, pX, pY, fX, fY):
-    pass
+    self.walkableEdges.append(self.area[pY][pX].prime * self.area[fY][fX].prime)
     
 
   def pathFind(self, heading, currX, currY):
@@ -43,25 +48,26 @@ class botLogic:
 
 
   class Tile:
-    def __init__(self, x, y) -> None:
-      self.primes = [[2, 3, 5, 7, 11, 13, 17], [19, 23, 29, 31, 37, 41, 43], [47, 53, 59, 61, 67, 71, 73], [79, 83, 89, 97, 101, 103, 107], [109, 113, 127, 131, 137, 139, 149], [151, 157, 163, 167, 173, 179, 181], [191, 193, 197, 199, 211, 223, 227]]
+    def __init__(self, x, y, prime) -> None:
       self.x = x
       self.y = y
       self.isGoal = 0
       self.isCurrent = False
       self.value = 1000
+      self.heading = 'N'
+      self.prime = prime
 
     def __str__(self):
-      return "(" + bcolors.WARNING + str(self.x) + ", " + str(self.y) + " " + str(self.primes[self.y][self.x]) + bcolors.ENDC + ")" if self.isCurrent == True else "(" + bcolors.OKBLUE + str(self.x) + ", " + str(self.y) + " " + str(self.primes[self.y][self.x]) + bcolors.ENDC + ")" if self.isGoal == BLUE else "(" + bcolors.FAIL + str(self.x) + ", " + str(self.y) + " " + str(self.primes[self.y][self.x]) + bcolors.ENDC + ")" if self.isGoal == RED else "(" + str(self.x) + ", " + str(self.y) + " " + str(self.primes[self.y][self.x]) + ")"
+      return "(" + bcolors.WARNING + str(self.x) + ", " + str(self.y) + " " + str(self.prime) + bcolors.ENDC + ")" if self.isCurrent == True else "(" + bcolors.OKBLUE + str(self.x) + ", " + str(self.y) + " " + str(self.prime) + bcolors.ENDC + ")" if self.isGoal == BLUE else "(" + bcolors.FAIL + str(self.x) + ", " + str(self.y) + " " + str(self.prime) + bcolors.ENDC + ")" if self.isGoal == RED else "(" + str(self.x) + ", " + str(self.y) + " " + str(self.prime) + ")"
+
+
 
 
 def main():
     logic = botLogic()
     print(logic)
-    while True:
-      _botInput = input("user input:")
-      if _botInput == "quit":
-        break
+    logic.update(0,0,0,1)
+    print(logic.isWalkablePath(0,0,0,1))
 
 if __name__ == "__main__":
   main()
