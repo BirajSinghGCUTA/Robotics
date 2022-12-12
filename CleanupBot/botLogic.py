@@ -28,6 +28,8 @@ class botLogic:
     self.area[self.goalB[1]][self.goalB[0]].isGoal = BLUE
     self.area[self.start[1]][self.start[0]].isCurrent = True
     self.walkableEdges = []
+    self.heading = 'N'
+    self.blocks = []
   
   def __str__(self) -> str:
     res = ""
@@ -44,7 +46,12 @@ class botLogic:
     
 
   def pathFind(self, heading, currX, currY):
-    pass
+    l = len(self.blocks)
+    for num in range(l):
+      print(num)
+
+  def addBlock(self, x, y):
+    self.blocks.append(self.area[y][x])
 
 
   class Tile:
@@ -53,8 +60,8 @@ class botLogic:
       self.y = y
       self.isGoal = 0
       self.isCurrent = False
+      self.isBlock = 0
       self.value = 1000
-      self.heading = 'N'
       self.prime = prime
 
     def __str__(self):
@@ -67,6 +74,9 @@ def main():
     logic = botLogic()
     print(logic)
     logic.update(0,0,0,1)
+    logic.addBlock(0,0)
+    logic.addBlock(0,1)
+    logic.pathFind(0,0,0)
     print(logic.isWalkablePath(0,0,0,1))
 
 if __name__ == "__main__":
