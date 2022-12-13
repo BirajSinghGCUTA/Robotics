@@ -30,7 +30,9 @@ class botLogic:
     self.walkableEdges = []
     self.heading = 'N'
     self.blocks = []
-  
+    self.toBePropagated = []
+
+
   def __str__(self) -> str:
     res = ""
     if VERBOSE == True:
@@ -42,7 +44,8 @@ class botLogic:
     return self.area[y][x].prime * self.area[_y][_x].prime in self.walkableEdges
 
   def update(self, pX, pY, fX, fY):
-    self.walkableEdges.append(self.area[pY][pX].prime * self.area[fY][fX].prime)
+    if self.area[pY][pX].prime * self.area[fY][fX].prime not in self.walkableEdges:
+      self.walkableEdges.append(self.area[pY][pX].prime * self.area[fY][fX].prime)
     
 
   def pathFind(self, heading, currX, currY):
@@ -50,9 +53,21 @@ class botLogic:
     for num in range(l):
       print(num)
 
-  def addBlock(self, x, y):
-    self.blocks.append(self.area[y][x])
+  def addBlock(self, x, y, color):
+    if self.area[y][x] not in self.blocks:
+      self.area[y][x].isBlock = color
+      self.blocks.append(self.area[y][x])
 
+  def findPathBetweenPoints(self, fromX, fromY, toX, toY):
+    self.resetState()
+    self.area[toY][toX].value = 0;
+    self.toBePropagated.append((toX,toY))
+
+
+  def resetState(self):
+    for row in self.area:
+      for tile in row:
+        tile.value = 1000
 
   class Tile:
     def __init__(self, x, y, prime) -> None:
@@ -74,10 +89,12 @@ def main():
     logic = botLogic()
     print(logic)
     logic.update(0,0,0,1)
-    logic.addBlock(0,0)
-    logic.addBlock(0,1)
+    logic.addBlock(0,0, RED)
+    logic.addBlock(1,1, BLUE)
     logic.pathFind(0,0,0)
     print(logic.isWalkablePath(0,0,0,1))
+    print(logic)
+    logic.resetState()
 
 if __name__ == "__main__":
   main()
