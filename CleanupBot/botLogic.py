@@ -4,7 +4,9 @@ RED = 5
 BLUE = 2
 VERBOSE = True
 
-
+'''
+helper class to be used for coloring the printed output. only needed for dev/testing
+'''
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -16,7 +18,15 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-
+'''
+only class that's needed
+goalR, goalB, start need to be updated before compiling 
+intended behavior is:
+object gets instantiated.
+every time the bot scans and doesn't find a wall, call the update method as such update(currX, currY, freeX, freeY)
+after scans are done, call the pathFind method, if it returns an empty string stay in random movement. else follow returned path string
+if the bot ever finds a block, call addBlock(blockX, blockY, COLOR) where COLOR matches either BLUE or RED
+'''
 class botLogic:
   def __init__(self) -> None:
     self.goalR = (0,6) 
@@ -32,31 +42,28 @@ class botLogic:
     self.blocks = []
     self.toBePropagated = []
 
-
-  def __str__(self) -> str:
-    res = ""
-    if VERBOSE == True:
-      for i in self.area:
-        print('\t'.join(map(str, i)))
-    return res
-  
-  def isWalkablePath(self, _x, _y, x, y):
-    return self.area[y][x].prime * self.area[_y][_x].prime in self.walkableEdges
-
+  '''
+  this method is used to add walkable edges to the list of possible edges.
+  preverification of a valid path between (pX, pY) and (fX, fY) existing must be done
+  '''
   def update(self, pX, pY, fX, fY):
     if self.area[pY][pX].prime * self.area[fY][fX].prime not in self.walkableEdges:
       self.walkableEdges.append(self.area[pY][pX].prime * self.area[fY][fX].prime)
     
-
+  '''
+  intended behavior:
+  for every block in the self.blocks list:
+    try to find a path between the bot and itself, if that is found then save the path and then:
+      find a path between the block and the respective goal.
+      return complete path from current bot location, to block location, and from block location to goal location
+      if path was successfully found then delete that block's entry 
+    if any of the above conditions fail then leave block in queue and test next block
+  '''
   def pathFind(self, heading, currX, currY):
     l = len(self.blocks)
     for num in range(l):
       print(num)
 
-  def addBlock(self, x, y, color):
-    if self.area[y][x] not in self.blocks:
-      self.area[y][x].isBlock = color
-      self.blocks.append(self.area[y][x])
 
   def findPathBetweenPoints(self, fromX, fromY, toX, toY):
     self.resetState()
@@ -64,10 +71,36 @@ class botLogic:
     self.toBePropagated.append((toX,toY))
 
 
+  def addBlock(self, x, y, color):
+    if self.area[y][x] not in self.blocks:
+      self.area[y][x].isBlock = color
+      self.blocks.append(self.area[y][x])
+
+  '''
+  helper method used to set the value of all cells to 1000 to reset the pathfinding algorithm
+  '''
   def resetState(self):
     for row in self.area:
       for tile in row:
         tile.value = 1000
+
+  '''
+  returns true if there is a known walkable path between (_x,_y) and (x,y)
+  returns false otherwise
+  '''
+  def isWalkablePath(self, _x, _y, x, y):
+    return self.area[y][x].prime * self.area[_y][_x].prime in self.walkableEdges
+
+  '''
+  helper method to declare the string representation of the whole 7x7 matrix
+  does not print anything if the VERBOSE constant is not True
+  '''
+  def __str__(self) -> str:
+    res = ""
+    if VERBOSE == True:
+      for i in self.area:
+        print('\t'.join(map(str, i)))
+    return res
 
   class Tile:
     def __init__(self, x, y, prime) -> None:
