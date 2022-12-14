@@ -4,8 +4,6 @@ from pybricks.ev3devices import (Motor, GyroSensor, ColorSensor, UltrasonicSenso
 from pybricks.parameters import Port, Stop, Direction, Color
 from pybricks.tools import wait
 
-# from pathFind import *
-
 class TankControls:
     def __init__(self) -> None:
         """
@@ -59,13 +57,31 @@ class TankControls:
         self.captured = False
 
     def scan_left(self):
-        return
-
-    def scan_right(self):
-        return
+        # self.ultra_motor.run_angle(200, 90)
+        self.gyro_sensor.reset_angle(0)
+        d = self.obstacle_sensor.distance()
+        wait(1000)
+        # 100 is an approximate distance from sensor to the wall. We can change it later on
+        return d - 100
 
     def scan_forward(self):
-        return 
+        self.ultra_motor.run_angle(400, -90)
+        self.gyro_sensor.reset_angle(0)
+        d = self.obstacle_sensor.distance()
+        wait(1000)
+        return d - 100
+
+    def scan_right(self):
+        self.curUSLoc = "r"
+        self.ultra_motor.run_angle(400, -90)
+        self.gyro_sensor.reset_angle(0)
+        d = self.obstacle_sensor.distance()
+        wait(1000)
+        return d - 100
+
+    def returnToPosition(self):
+        self.ultra_motor.run_angle(400, 180)
+        self.gyro_sensor.reset_angle(0)
 
     def sense_color(self, colorVal):
         print(self.col_sensor.color())
@@ -240,8 +256,26 @@ class TankControls:
 
 if __name__ == "__main__":
     init = TankControls()
+    make_a_map = True
+    cntTiles = 1
+
+    # myMap = np.zeros((7,7))
+    # print(myMap)
     # world = Workspace()
-    init.repositionUltrasonicSensor()
-    init.captureBlock()
-    init.execute_commands("F F L F R F")
-    init.releaseBlock()
+    # x, y = 0, 0
+    # while True:
+        # init.repositionUltrasonicSensor()
+        # if make_a_map == True:
+            # if cntTiles < 43:
+    leftVal = init.scan_left()
+    frontVal = init.scan_forward()
+    rightVal = init.scan_right()
+    print("tilesOnTheLeft: ", int(leftVal/300))
+    print("tilesInFront: ", int(frontVal/300))
+    print("tilesOnTheRight: ", int(rightVal/300))
+    init.returnToPosition()
+                # if init.sense_color("red") or init.sense_color("blue") or init.sense_color("green"):
+                    # init.go_backwards()
+            # init.captureBlock()
+            # init.go_straight()
+        # init.releaseBlock()
