@@ -141,9 +141,8 @@ class TankControls:
         wait(10)
        # This is the PID controller. It is used to make the robot go straight.
         while angle_travelled < total_angle:
-            if self.tank_controls.sense_color("red") or self.tank_controls.sense_color("blue") or self.tank_controls.sense_color("green") :
+            if self.sense_color("red") or self.sense_color("blue") or self.sense_color("green") :
                 break
-
             angle_error = self.gyro_sensor.angle() - 0
             angle_integral = angle_integral + angle_error
             angle_derevative = angle_error - last_angle_error
@@ -158,6 +157,10 @@ class TankControls:
         # Stopping the motors
         self.motor_left.brake()
         self.motor_right.brake()
+        if(angle_travelled < total_angle):
+            return False
+        else:
+            return True
 
     def go_left(self, speed=100, rotation=465):
         """
@@ -288,6 +291,7 @@ class TankControls:
         :param command_string: This is the string of commands that you want to execute
         """
         index_command_string = 0
+        executed_commands = ''
         while index_command_string < len(command_string):
             if command_string[index_command_string] == 'F':
                 count_forward_commands = 1
@@ -300,7 +304,8 @@ class TankControls:
                         count_half_forward_commands =  count_half_forward_commands + 1
                     index_command_string = index_command_string + 1
                 index_command_string = index_command_string - 1
-                self.go_straight(distance = ((0.305*count_forward_commands) + ((0.305/2) * count_half_forward_commands)))
+                if not self.go_straight(distance = ((0.305*count_forward_commands) + ((0.305/2) * count_half_forward_commands))):
+                    return executed_commands
 
 
             if command_string[index_command_string] == 'f':
@@ -314,15 +319,19 @@ class TankControls:
                         count_half_forward_commands =  count_half_forward_commands + 1
                     index_command_string = index_command_string + 1
                 index_command_string = index_command_string - 1
-                self.go_straight(speed=250, distance = ((0.305*count_forward_commands) + ((0.305/2) * count_half_forward_commands)))
-
+                if not self.go_straight(speed=250, distance = ((0.305*count_forward_commands) + ((0.305/2) * count_half_forward_commands))):
+                    return executed_commands
+                
             if command_string[index_command_string] == 'L':
                 self.go_left()
             if command_string[index_command_string] == 'R':
                 self.go_right()
 
+            executed_commands += (command_string[index_command_string])
+            
             index_command_string = index_command_string + 1
 
+        return executed_commands
 
 if __name__ == "__main__":
     # init = TankControls()
@@ -352,3 +361,4 @@ if __name__ == "__main__":
 
     init = Localization((0,0), 'S')
     init.explore()
+    init.printCurrentCoordinate()
