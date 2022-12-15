@@ -3,6 +3,8 @@ from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import (Motor, GyroSensor, ColorSensor, UltrasonicSensor)
 from pybricks.parameters import Port, Stop, Direction, Color
 from pybricks.tools import wait
+ 
+from localization import *
 
 class TankControls:
     def __init__(self) -> None:
@@ -59,32 +61,32 @@ class TankControls:
     def scan_left(self):
         # self.ultra_motor.run_angle(200, 90)
         self.gyro_sensor.reset_angle(0)
-        d = self.obstacle_sensor.distance()
         wait(1000)
+        d = self.obstacle_sensor.distance()
         # 100 is an approximate distance from sensor to the wall. We can change it later on
-        return d - 100
+        return d
 
     def scan_forward(self):
         self.ultra_motor.run_angle(400, -90)
         self.gyro_sensor.reset_angle(0)
-        d = self.obstacle_sensor.distance()
         wait(1000)
-        return d - 100
+        d = self.obstacle_sensor.distance()
+        return d
 
     def scan_right(self):
         self.curUSLoc = "r"
         self.ultra_motor.run_angle(400, -90)
         self.gyro_sensor.reset_angle(0)
-        d = self.obstacle_sensor.distance()
         wait(1000)
-        return d - 100
+        d = self.obstacle_sensor.distance()
+        return d
 
     def returnToPosition(self):
         self.ultra_motor.run_angle(400, 180)
         self.gyro_sensor.reset_angle(0)
 
     def sense_color(self, colorVal):
-        print(self.col_sensor.color())
+        # print(self.col_sensor.color())
 
         if colorVal.lower() == "blue":
             checkColor = Color.BLUE
@@ -135,6 +137,9 @@ class TankControls:
         wait(10)
        # This is the PID controller. It is used to make the robot go straight.
         while angle_travelled < total_angle:
+            if self.tank_controls.sense_color("red") or self.tank_controls.sense_color("blue") or self.tank_controls.sense_color("green") :
+                break
+            
             angle_error = self.gyro_sensor.angle() - 0
             angle_integral = angle_integral + angle_error
             angle_derevative = angle_error - last_angle_error
@@ -168,17 +173,17 @@ class TankControls:
         # This is a while loop that is used to make the robot turn left until the gyro sensor reads
         # -91 degrees.
         angle = self.gyro_sensor.angle()
-        while angle != -91:
-            if angle < -91:
+        while angle != -88:
+            if angle < -88:
                 self.motor_left.run_angle(100,5, wait=False)
                 self.motor_right.run_angle(100,-5, wait=True)
-            elif angle > -91:
+            elif angle > -88:
                 self.motor_left.run_angle(100,-5, wait=False)
                 self.motor_right.run_angle(100,5, wait=True)
-            wait(10)
+            wait(100)
             angle = self.gyro_sensor.angle()
 
-    def go_right(self, speed=200, rotation=465):
+    def go_right(self, speed=100, rotation=465):
         """
         The robot turns right until the gyro sensor reads 89 degrees
         
@@ -196,14 +201,14 @@ class TankControls:
         # This is a while loop that is used to make the robot turn right until the gyro sensor reads
         # 89 degrees.
         angle = self.gyro_sensor.angle()
-        while angle != 91:
-            if angle < 91:
+        while angle != 94:
+            if angle < 94:
                 self.motor_left.run_angle(100,5, wait=False)
                 self.motor_right.run_angle(100,-5, wait=True)
-            elif angle > 91:
+            elif angle > 94:
                 self.motor_left.run_angle(100,-5, wait=False)
                 self.motor_right.run_angle(100,5, wait=True)
-            wait(10)
+            wait(100)
             angle = self.gyro_sensor.angle()
 
     def go_backwards(self, speed=400, rotation=463):
@@ -255,27 +260,30 @@ class TankControls:
 
 
 if __name__ == "__main__":
-    init = TankControls()
-    make_a_map = True
-    cntTiles = 1
+    # init = TankControls()
+    # make_a_map = True
+    # cntTiles = 1
 
-    # myMap = np.zeros((7,7))
-    # print(myMap)
-    # world = Workspace()
-    # x, y = 0, 0
-    # while True:
-        # init.repositionUltrasonicSensor()
-        # if make_a_map == True:
-            # if cntTiles < 43:
-    leftVal = init.scan_left()
-    frontVal = init.scan_forward()
-    rightVal = init.scan_right()
-    print("tilesOnTheLeft: ", int(leftVal/300))
-    print("tilesInFront: ", int(frontVal/300))
-    print("tilesOnTheRight: ", int(rightVal/300))
-    init.returnToPosition()
-                # if init.sense_color("red") or init.sense_color("blue") or init.sense_color("green"):
-                    # init.go_backwards()
-            # init.captureBlock()
-            # init.go_straight()
-        # init.releaseBlock()
+    # # myMap = np.zeros((7,7))
+    # # print(myMap)
+    # # world = Workspace()
+    # # x, y = 0, 0
+    # # while True:
+    #     # init.repositionUltrasonicSensor()
+    #     # if make_a_map == True:
+    #         # if cntTiles < 43:
+    # leftVal = init.scan_left()
+    # frontVal = init.scan_forward()
+    # rightVal = init.scan_right()
+    # print("tilesOnTheLeft: ", int(leftVal/300))
+    # print("tilesInFront: ", int(frontVal/300))
+    # print("tilesOnTheRight: ", int(rightVal/300))
+    # init.returnToPosition()
+    #             # if init.sense_color("red") or init.sense_color("blue") or init.sense_color("green"):
+    #                 # init.go_backwards()
+    #         # init.captureBlock()
+    #         # init.go_straight()
+    #     # init.releaseBlock()
+
+    init = Localization((0,0), 'S')
+    init.explore()
