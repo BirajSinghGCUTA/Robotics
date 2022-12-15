@@ -16,7 +16,6 @@ class Localization:
         self.current_coordinate = starting_pos
         self.current_orientation = starting_orientation
         self.tank_controls = TankControls()
-        self.pathFinder = botLogic()
         self.traveled_coordinates = set()
 
     def count_tiles(self, distance):
@@ -75,28 +74,53 @@ class Localization:
     using the random.choice() function. The chosen direction is then returned by the getNextDirection() method. 
     '''
     def get_next_direction(self):
+
+        bot_left = self.tank_controls.scan_left()
+        bot_forward = self.tank_controls.scan_forward()
+        bot_right = self.tank_controls.scan_right()
+        
+        self.tank_controls.returnToPosition()
+        
+        print(bot_left)
+        print(bot_forward)
+        print(bot_right)
+
+        forward_tile_count = self.count_tiles(bot_forward)
+        left_tile_count = self.count_tiles(bot_left)
+        right_tile_count = self.count_tiles(bot_right)
+
+
         forward_coordinate = self.get_forward_coordinate(self.current_coordinate, self.current_orientation)
         left_coordinate = self.get_left_coordinate(self.current_coordinate, self.current_orientation)
         right_coordinate = self.get_right_coordinate(self.current_coordinate, self.current_orientation)
 
         directions = []
-        if self.pathFinder.isWalkablePath(self.current_coordinate[0],self.current_coordinate[1], forward_coordinate[0], forward_coordinate[1]) \
-        and forward_coordinate not in self.traveled_coordinates:
+        if forward_coordinate not in self.traveled_coordinates and forward_tile_count > 0:
             directions.append('F')
 
-        if self.pathFinder.isWalkablePath(self.current_coordinate[0],self.current_coordinate[1], left_coordinate[0], left_coordinate[1])\
-            and left_coordinate not in self.traveled_coordinates:
+        if left_coordinate not in self.traveled_coordinates and left_tile_count > 0:
            directions.append('LF')
 
-        if self.pathFinder.isWalkablePath(self.current_coordinate[0],self.current_coordinate[1], right_coordinate[0], right_coordinate[1])\
-            and right_coordinate not in self.traveled_coordinates:
+        if right_coordinate not in self.traveled_coordinates and right_tile_count > 0:
             directions.append('RF')
         
 
         if directions:
             direction = random.choice(directions)
         else:
-            direction = random.choice(('LF','RF','F'))
+            if forward_tile_count > 0:
+                directions.append('F')
+
+            if left_tile_count > 0:
+                directions.append('LF')
+
+            if right_tile_count > 0:
+                directions.append('RF')
+
+            if directions:
+                direction = random.choice(directions)
+            else:
+                direction = random.choice(('RRRR', 'LLLL'))
 
         print(direction)
         return direction
@@ -131,6 +155,7 @@ class Localization:
         bot_left = self.tank_controls.scan_left()
         bot_forward = self.tank_controls.scan_forward()
         bot_right = self.tank_controls.scan_right()
+        
         self.tank_controls.returnToPosition()
         
         print(bot_left)
@@ -148,8 +173,6 @@ class Localization:
         temp_coordinate = self.current_coordinate
         while(forward_tile_count > 0):
             forward_coordinate = self.get_forward_coordinate( temp_coordinate, self.current_orientation)
-            if not self.pathFinder.update(temp_coordinate[0], temp_coordinate[1], forward_coordinate[0], forward_coordinate[1]):
-                break
             temp_coordinate = forward_coordinate
             forward_tile_count = forward_tile_count - 1
         
@@ -171,22 +194,19 @@ class Localization:
 
     def explore(self):
         while True:
-            if self.tank_controls.sense_color("red") or self.tank_controls.sense_color("blue") or self.tank_controls.sense_color("green") :
-                #it is either the goal coordinate or the block.
-                #if it is goal coordinate, do nothing, run normal.
-                #if it is block coordinate , add block.
-                pass
-
             if self.current_coordinate not in self.traveled_coordinates:
-                self.localize_coordinate()
                 self.traveled_coordinates.add(self.current_coordinate)
-                #do a general pathfind to see if path needs to be searched.
 
             Direction_command = self.get_next_direction()
-            self.tank_controls.execute_commands(Direction_command)
+            Direction_command = self.tank_controls.execute_commands(Direction_command)
             self.current_coordinate, self.current_orientation = self.get_direction_orientation_coordinate(Direction_command)
             
-
+            if self.tank_controls.sense_color("red") or self.tank_controls.sense_color("blue") or self.tank_controls.sense_color("green") :
+                break
+            
+            
+    def printCurrentCoordinate(self):
+        print(self.current_coordinate)
 
     
     
