@@ -4,6 +4,10 @@ from pybricks.ev3devices import (Motor, GyroSensor, ColorSensor, UltrasonicSenso
 from pybricks.parameters import Port, Stop, Direction, Color
 from pybricks.tools import wait
 
+# import numpy as np
+
+# from pathFind import *
+
 class TankControls:
     def __init__(self) -> None:
         """
@@ -14,8 +18,8 @@ class TankControls:
        # Initializing the EV3 brick and the motors.
         self.ev3 = EV3Brick()
         self.motor_right = Motor(Port.A)
-        self.ultra_motor = Motor(Port.C)
-        self.block_motor = Motor(Port.B)
+        self.block_motor = Motor(Port.C)
+        self.ultra_motor = Motor(Port.B)
         self.block_motor.reset_angle(0)
         self.motor_left = Motor(Port.D)
 
@@ -40,18 +44,18 @@ class TankControls:
         self.ultra_motor.run_angle(200, -90)
         self.ultra_motor.run_angle(200, -90)
         # self.ultra_motor.run_angle(200, 90)
-        pass
+        # pass
 
     def captureBlock(self):
         if self.captured:
             pass
         else:
-            self.block_motor.run_angle(200, -90)
+            self.block_motor.run_angle(200, -50)
         self.captured = True
 
     def releaseBlock(self):
         if self.captured:
-            self.block_motor.run_angle(200, 90)
+            self.block_motor.run_angle(200, 50)
         else:
             pass
         self.captured = False
@@ -73,14 +77,14 @@ class TankControls:
 
     def scan_right(self):
         self.curUSLoc = "r"
-        self.ultra_motor.run_angle(400, -90)
+        self.ultra_motor.run_angle(400, -100)
         self.gyro_sensor.reset_angle(0)
         d = self.obstacle_sensor.distance()
         wait(1000)
         return d - 100
 
     def returnToPosition(self):
-        self.ultra_motor.run_angle(400, 180)
+        self.ultra_motor.run_angle(400, 190)
         self.gyro_sensor.reset_angle(0)
 
     def sense_color(self, colorVal):
@@ -267,15 +271,17 @@ if __name__ == "__main__":
         # init.repositionUltrasonicSensor()
         # if make_a_map == True:
             # if cntTiles < 43:
-    leftVal = init.scan_left()
-    frontVal = init.scan_forward()
-    rightVal = init.scan_right()
-    print("tilesOnTheLeft: ", int(leftVal/300))
-    print("tilesInFront: ", int(frontVal/300))
-    print("tilesOnTheRight: ", int(rightVal/300))
-    init.returnToPosition()
+    # for i in range(5):
+        # leftVal = init.scan_left()
+        # frontVal = init.scan_forward()
+        # rightVal = init.scan_right()
+        # print("tilesOnTheLeft: ", int(leftVal/300))
+        # print("tilesInFront: ", int(frontVal/300))
+        # print("tilesOnTheRight: ", int(rightVal/300))
+        # init.returnToPosition()
                 # if init.sense_color("red") or init.sense_color("blue") or init.sense_color("green"):
                     # init.go_backwards()
-            # init.captureBlock()
-            # init.go_straight()
-        # init.releaseBlock()
+    init.releaseBlock()
+    wait(2000)
+    init.captureBlock()
+    # init.go_straight()
