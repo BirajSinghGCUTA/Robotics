@@ -220,6 +220,67 @@ class TankControls:
         self.motor_left.run_angle(speed,-rotation, wait=False)
         self.motor_right.run_angle(speed,-rotation, wait=True)
 
+    def count_tiles(self, distance):
+            if(distance >= 2550 or distance <= 250):
+                return 0
+            elif (distance > 250 and distance < 305):
+                return 1
+            else: 
+                return int(distance / 305)
+
+    def getHemisphere(self):
+        bot_left = self.scan_left()
+        bot_forward = self.scan_forward()
+        bot_right = self.scan_right()
+        self.returnToPosition()
+        
+        print(bot_left)
+        print(bot_forward)
+        print(bot_right)
+
+        left_tile_count = self.count_tiles(bot_left)
+        right_tile_count = self.count_tiles(bot_right)
+        forward_tile_count = self.count_tiles(bot_forward)
+        
+        hemisphere = ''
+        hDist = left_tile_count + right_tile_count + 1
+        if hDist > 4:
+            hemisphere = 'b'
+        elif hDist == 4:
+            if forward_tile_count == 0:
+                hemisphere = 't'
+            else:
+                self.go_straight()
+                bot_left = self.scan_left()
+                bot_forward = self.scan_forward()
+                bot_right = self.scan_right()
+                self.returnToPosition()
+                left_tile_count = self.count_tiles(bot_left)
+                right_tile_count = self.count_tiles(bot_right)
+                hDist = left_tile_count + right_tile_count + 1
+                hemisphere = 't' if hDist < 4 else 'b'
+        else:
+            hemisphere = 't'
+
+        return hemisphere
+
+    
+    def approach_wall(self):
+        hemi = self.getHemisphere()
+        bot_left = self.scan_left()
+        bot_forward = self.scan_forward()
+        bot_right = self.scan_right()
+        self.returnToPosition()
+        
+        left_tile_count = self.count_tiles(bot_left)
+        right_tile_count = self.count_tiles(bot_right)
+        forward_tile_count = self.count_tiles(bot_forward)
+        if hemi == 't':
+            
+        if hemi == 'b':
+
+
+
     def execute_commands(self, command_string):
         """
         The function takes in a string of commands and executes them one by one
