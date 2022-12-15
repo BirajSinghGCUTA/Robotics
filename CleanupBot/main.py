@@ -3,8 +3,12 @@ from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import (Motor, GyroSensor, ColorSensor, UltrasonicSensor)
 from pybricks.parameters import Port, Stop, Direction, Color
 from pybricks.tools import wait
- 
+
 from localization import *
+
+# import numpy as np
+
+# from pathFind import *
 
 class TankControls:
     def __init__(self) -> None:
@@ -16,8 +20,8 @@ class TankControls:
        # Initializing the EV3 brick and the motors.
         self.ev3 = EV3Brick()
         self.motor_right = Motor(Port.A)
-        self.ultra_motor = Motor(Port.C)
-        self.block_motor = Motor(Port.B)
+        self.block_motor = Motor(Port.C)
+        self.ultra_motor = Motor(Port.B)
         self.block_motor.reset_angle(0)
         self.motor_left = Motor(Port.D)
 
@@ -42,18 +46,18 @@ class TankControls:
         self.ultra_motor.run_angle(200, -90)
         self.ultra_motor.run_angle(200, -90)
         # self.ultra_motor.run_angle(200, 90)
-        pass
+        # pass
 
     def captureBlock(self):
         if self.captured:
             pass
         else:
-            self.block_motor.run_angle(200, -90)
+            self.block_motor.run_angle(200, -50)
         self.captured = True
 
     def releaseBlock(self):
         if self.captured:
-            self.block_motor.run_angle(200, 90)
+            self.block_motor.run_angle(200, 50)
         else:
             pass
         self.captured = False
@@ -75,14 +79,14 @@ class TankControls:
 
     def scan_right(self):
         self.curUSLoc = "r"
-        self.ultra_motor.run_angle(400, -90)
+        self.ultra_motor.run_angle(400, -100)
         self.gyro_sensor.reset_angle(0)
         wait(1000)
         d = self.obstacle_sensor.distance()
         return d
 
     def returnToPosition(self):
-        self.ultra_motor.run_angle(400, 180)
+        self.ultra_motor.run_angle(400, 190)
         self.gyro_sensor.reset_angle(0)
 
     def sense_color(self, colorVal):
@@ -96,12 +100,12 @@ class TankControls:
             checkColor = Color.RED
 
         return True if self.col_sensor.color() == checkColor else False
-        
+
     def go_straight(self, speed=400, distance = 0.305):
         """
         The function takes in a speed and distance and makes the robot go straight for that distance at
         that speed
-        
+
         :param speed: The speed at which the robot will move, defaults to 300 (optional)
         :param distance: The distance you want to travel in meters
         """
@@ -118,7 +122,7 @@ class TankControls:
         distance_we_want_to_travel = distance * 100
         total_revolutions_needed = distance_we_want_to_travel / distance_travelled_by_wheel
         total_angle = total_revolutions_needed * 360
-    
+
         # Resetting the angle of the gyro sensor and the motors to 0.
         self.gyro_sensor.reset_angle(0)
         self.motor_left.reset_angle(0)
@@ -139,7 +143,7 @@ class TankControls:
         while angle_travelled < total_angle:
             if self.tank_controls.sense_color("red") or self.tank_controls.sense_color("blue") or self.tank_controls.sense_color("green") :
                 break
-            
+
             angle_error = self.gyro_sensor.angle() - 0
             angle_integral = angle_integral + angle_error
             angle_derevative = angle_error - last_angle_error
@@ -147,7 +151,7 @@ class TankControls:
             turn_rate = angle_error * propotional_gain + integral_gain * angle_integral + derevative_gain * angle_derevative
             self.motor_left.run(int(speed - turn_rate))
             self.motor_right.run(int(speed  + turn_rate))
-            
+
             last_angle_error = angle_error
             angle_travelled  = (self.motor_right.angle() + self.motor_left.angle())/2
             wait(10)
@@ -158,7 +162,7 @@ class TankControls:
     def go_left(self, speed=100, rotation=465):
         """
         The robot turns left until the gyro sensor reads -91 degrees
-        
+
         :param speed: the speed of the motors, defaults to 200 (optional)
         :param rotation: the number of degrees the robot will turn, defaults to 465 (optional)
         """
@@ -169,7 +173,7 @@ class TankControls:
         # Making the robot turn left.
         self.motor_left.run_angle(speed,-rotation, wait=False)
         self.motor_right.run_angle(speed,rotation, wait=True)
-        
+
         # This is a while loop that is used to make the robot turn left until the gyro sensor reads
         # -91 degrees.
         angle = self.gyro_sensor.angle()
@@ -186,7 +190,7 @@ class TankControls:
     def go_right(self, speed=100, rotation=465):
         """
         The robot turns right until the gyro sensor reads 89 degrees
-        
+
         :param speed: the speed of the motors, defaults to 200 (optional)
         :param rotation: the number of degrees the robot will turn, defaults to 463 (optional)
         """
@@ -197,7 +201,7 @@ class TankControls:
         # Making the robot turn right.
         self.motor_left.run_angle(speed,rotation, wait=False)
         self.motor_right.run_angle(speed,-rotation, wait=True)
-        
+
         # This is a while loop that is used to make the robot turn right until the gyro sensor reads
         # 89 degrees.
         angle = self.gyro_sensor.angle()
@@ -219,7 +223,7 @@ class TankControls:
     def execute_commands(self, command_string):
         """
         The function takes in a string of commands and executes them one by one
-        
+
         :param command_string: This is the string of commands that you want to execute
         """
         index_command_string = 0
@@ -235,7 +239,7 @@ class TankControls:
                         count_half_forward_commands =  count_half_forward_commands + 1
                     index_command_string = index_command_string + 1
                 index_command_string = index_command_string - 1
-                self.go_straight(distance = ((0.305*count_forward_commands) + ((0.305/2) * count_half_forward_commands))) 
+                self.go_straight(distance = ((0.305*count_forward_commands) + ((0.305/2) * count_half_forward_commands)))
 
 
             if command_string[index_command_string] == 'f':
