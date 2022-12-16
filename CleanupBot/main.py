@@ -275,12 +275,25 @@ class TankControls:
         bot_right = self.scan_right()
         self.returnToPosition()
         
-        left_tile_count = self.count_tiles(bot_left)
-        right_tile_count = self.count_tiles(bot_right)
         forward_tile_count = self.count_tiles(bot_forward)
         if hemi == 't':
-            
+            for n in range(forward_tile_count):
+                self.go_straight()
+            self.go_right()
+            ##################TODO#########
         if hemi == 'b':
+            self.go_left()
+            self.go_left()
+            bot_left = self.scan_left()
+            bot_forward = self.scan_forward()
+            bot_right = self.scan_right()
+            self.returnToPosition()
+            forward_tile_count = self.count_tiles(bot_forward)
+
+            for n in range(forward_tile_count):
+                self.go_straight()
+            self.go_left()
+            ##########################TODO
 
 
 
