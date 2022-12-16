@@ -10,6 +10,7 @@ from localization import *
 
 # from pathFind import *
 
+
 class TankControls:
     def __init__(self) -> None:
         """
@@ -72,22 +73,26 @@ class TankControls:
 
     def scan_forward(self):
         self.ultra_motor.run_angle(400, -90)
-        self.gyro_sensor.reset_angle(0)
         wait(1000)
         d = self.obstacle_sensor.distance()
         return d
 
     def scan_right(self):
-        self.curUSLoc = "r"
         self.ultra_motor.run_angle(400, -100)
-        self.gyro_sensor.reset_angle(0)
         wait(1000)
         d = self.obstacle_sensor.distance()
         return d
 
+    def position_ultra_left(self):
+        self.ultra_motor.run_angle(400, -100)
+        wait(1000)
+
+    def position_ultra_right(self):
+        self.ultra_motor.run_angle(400, -100)
+        wait(1000)
+
     def returnToPosition(self):
-        self.ultra_motor.run_angle(400, 190)
-        self.gyro_sensor.reset_angle(0)
+        self.ultra_motor.run_target(180, 0)
 
     def sense_color(self, colorVal):
         # print(self.col_sensor.color())
@@ -101,11 +106,88 @@ class TankControls:
 
         return True if self.col_sensor.color() == checkColor else False
 
-    def go_straight(self, speed=400, distance = 0.305):
+    def foundWall(self):
+        print(self.obstacle_sensor.distance())
+        return True if self.obstacle_sensor.distance() < 70 else False
+
+    def followLeftWall(self, speed=250):
         """
         The function takes in a speed and distance and makes the robot go straight for that distance at
         that speed
+        :param speed: The speed at which the robot will move, defaults to 300 (optional)
+        :param distance: The distance you want to travel in meters
+        """
 
+        # These are the variables that are used in the PID controller.
+        propotional_gain = 0.8
+        integral_gain = 0.1
+        derevative_gain = 0.01
+
+        # These are the variables that are used in the PID controller.
+        distance_integral = 0
+        distance_derevative = 0
+        last_distance_error = 0
+        wait(10)
+
+        # This is the PID controller. It is used to make the robot go straight.
+        while self.r_touch.pressed() is False and self.l_touch.pressed() is False:
+            distance_error = self.obstacle_sensor.distance() - 95
+
+            if self.obstacle_sensor.distance() > 100:
+                self.go_left()
+                self.go_straight()
+                self.go_left()
+                self.go_straight()
+
+            # computing the error rate
+            turn_rate = distance_error * propotional_gain
+
+            # correcting the motors speed as needed using PID
+            self.left_motor.run(int(speed - turn_rate))
+            self.right_motor.run(int(speed + turn_rate))
+            wait(100)
+
+    def followRightWall(self, speed=250):
+        """
+        The function takes in a speed and distance and makes the robot go straight for that distance at
+        that speed
+        :param speed: The speed at which the robot will move, defaults to 300 (optional)
+        :param distance: The distance you want to travel in meters
+        """
+
+        # These are the variables that are used in the PID controller.
+        propotional_gain = 0.8
+        integral_gain = 0.1
+        derevative_gain = 0.01
+
+        # These are the variables that are used in the PID controller.
+        distance_integral = 0
+        distance_derevative = 0
+        last_distance_error = 0
+        wait(10)
+
+        # This is the PID controller. It is used to make the robot go straight.
+        while self.r_touch.pressed() is False and self.l_touch.pressed() is False:
+            distance_error = self.obstacle_sensor.distance() - 95
+
+            if self.obstacle_sensor.distance() > 100:
+                self.go_right()
+                self.go_straight()
+                self.go_right()
+                self.go_straight()
+
+            # computing the error rate
+            turn_rate = distance_error * propotional_gain
+
+            # correcting the motors speed as needed using PID
+            self.left_motor.run(int(speed - turn_rate))
+            self.right_motor.run(int(speed + turn_rate))
+            wait(100)
+
+    def go_straight(self, speed=400, distance=0.305):
+        """
+        The function takes in a speed and distance and makes the robot go straight for that distance at
+        that speed
         :param speed: The speed at which the robot will move, defaults to 300 (optional)
         :param distance: The distance you want to travel in meters
         """
@@ -141,31 +223,28 @@ class TankControls:
         wait(10)
        # This is the PID controller. It is used to make the robot go straight.
         while angle_travelled < total_angle:
-            if self.sense_color("red") or self.sense_color("blue") or self.sense_color("green") :
+            if self.tank_controls.sense_color("red") or self.tank_controls.sense_color("blue") or self.tank_controls.sense_color("green"):
                 break
+
             angle_error = self.gyro_sensor.angle() - 0
             angle_integral = angle_integral + angle_error
             angle_derevative = angle_error - last_angle_error
 
-            turn_rate = angle_error * propotional_gain + integral_gain * angle_integral + derevative_gain * angle_derevative
+            turn_rate = angle_error * propotional_gain + integral_gain * \
+                angle_integral + derevative_gain * angle_derevative
             self.motor_left.run(int(speed - turn_rate))
-            self.motor_right.run(int(speed  + turn_rate))
+            self.motor_right.run(int(speed + turn_rate))
 
             last_angle_error = angle_error
-            angle_travelled  = (self.motor_right.angle() + self.motor_left.angle())/2
+            angle_travelled = (self.motor_right.angle() + self.motor_left.angle()) / 2
             wait(10)
         # Stopping the motors
         self.motor_left.brake()
         self.motor_right.brake()
-        if(angle_travelled < total_angle):
-            return False
-        else:
-            return True
 
     def go_left(self, speed=100, rotation=465):
         """
         The robot turns left until the gyro sensor reads -91 degrees
-
         :param speed: the speed of the motors, defaults to 200 (optional)
         :param rotation: the number of degrees the robot will turn, defaults to 465 (optional)
         """
@@ -174,26 +253,25 @@ class TankControls:
         self.gyro_sensor.reset_angle(0)
 
         # Making the robot turn left.
-        self.motor_left.run_angle(speed,-rotation, wait=False)
-        self.motor_right.run_angle(speed,rotation, wait=True)
+        self.motor_left.run_angle(speed, -rotation, wait=False)
+        self.motor_right.run_angle(speed, rotation, wait=True)
 
         # This is a while loop that is used to make the robot turn left until the gyro sensor reads
         # -91 degrees.
         angle = self.gyro_sensor.angle()
         while angle != -88:
             if angle < -88:
-                self.motor_left.run_angle(100,5, wait=False)
-                self.motor_right.run_angle(100,-5, wait=True)
+                self.motor_left.run_angle(100, 5, wait=False)
+                self.motor_right.run_angle(100, -5, wait=True)
             elif angle > -88:
-                self.motor_left.run_angle(100,-5, wait=False)
-                self.motor_right.run_angle(100,5, wait=True)
+                self.motor_left.run_angle(100, -5, wait=False)
+                self.motor_right.run_angle(100, 5, wait=True)
             wait(100)
             angle = self.gyro_sensor.angle()
 
     def go_right(self, speed=100, rotation=465):
         """
         The robot turns right until the gyro sensor reads 89 degrees
-
         :param speed: the speed of the motors, defaults to 200 (optional)
         :param rotation: the number of degrees the robot will turn, defaults to 463 (optional)
         """
@@ -202,41 +280,41 @@ class TankControls:
         self.gyro_sensor.reset_angle(0)
 
         # Making the robot turn right.
-        self.motor_left.run_angle(speed,rotation, wait=False)
-        self.motor_right.run_angle(speed,-rotation, wait=True)
+        self.motor_left.run_angle(speed, rotation, wait=False)
+        self.motor_right.run_angle(speed, -rotation, wait=True)
 
         # This is a while loop that is used to make the robot turn right until the gyro sensor reads
         # 89 degrees.
         angle = self.gyro_sensor.angle()
         while angle != 94:
             if angle < 94:
-                self.motor_left.run_angle(100,5, wait=False)
-                self.motor_right.run_angle(100,-5, wait=True)
+                self.motor_left.run_angle(100, 5, wait=False)
+                self.motor_right.run_angle(100, -5, wait=True)
             elif angle > 94:
-                self.motor_left.run_angle(100,-5, wait=False)
-                self.motor_right.run_angle(100,5, wait=True)
+                self.motor_left.run_angle(100, -5, wait=False)
+                self.motor_right.run_angle(100, 5, wait=True)
             wait(100)
             angle = self.gyro_sensor.angle()
 
     def go_backwards(self, speed=400, rotation=463):
         self.ev3.speaker.beep()
-        self.motor_left.run_angle(speed,-rotation, wait=False)
-        self.motor_right.run_angle(speed,-rotation, wait=True)
+        self.motor_left.run_angle(speed, -rotation, wait=False)
+        self.motor_right.run_angle(speed, -rotation, wait=True)
 
     def count_tiles(self, distance):
-            if(distance >= 2550 or distance <= 250):
-                return 0
-            elif (distance > 250 and distance < 305):
-                return 1
-            else: 
-                return int(distance / 305)
+        if(distance >= 2550 or distance <= 250):
+            return 0
+        elif (distance > 250 and distance < 305):
+            return 1
+        else:
+            return int(distance / 305)
 
     def getHemisphere(self):
         bot_left = self.scan_left()
         bot_forward = self.scan_forward()
         bot_right = self.scan_right()
         self.returnToPosition()
-        
+
         print(bot_left)
         print(bot_forward)
         print(bot_right)
@@ -244,7 +322,7 @@ class TankControls:
         left_tile_count = self.count_tiles(bot_left)
         right_tile_count = self.count_tiles(bot_right)
         forward_tile_count = self.count_tiles(bot_forward)
-        
+
         hemisphere = ''
         hDist = left_tile_count + right_tile_count + 1
         if hDist > 4:
@@ -267,14 +345,13 @@ class TankControls:
 
         return hemisphere
 
-    
     def approach_wall(self):
         hemi = self.getHemisphere()
         bot_left = self.scan_left()
         bot_forward = self.scan_forward()
         bot_right = self.scan_right()
         self.returnToPosition()
-        
+
         forward_tile_count = self.count_tiles(bot_forward)
         if hemi == 't':
             for n in range(forward_tile_count):
@@ -293,18 +370,14 @@ class TankControls:
             for n in range(forward_tile_count):
                 self.go_straight()
             self.go_left()
-            ##########################TODO
-
-
+            # TODO
 
     def execute_commands(self, command_string):
         """
         The function takes in a string of commands and executes them one by one
-
         :param command_string: This is the string of commands that you want to execute
         """
         index_command_string = 0
-        executed_commands = ''
         while index_command_string < len(command_string):
             if command_string[index_command_string] == 'F':
                 count_forward_commands = 1
@@ -314,12 +387,11 @@ class TankControls:
                     if command_string[index_command_string] == 'F':
                         count_forward_commands = count_forward_commands + 1
                     elif command_string[index_command_string] == 'f':
-                        count_half_forward_commands =  count_half_forward_commands + 1
+                        count_half_forward_commands = count_half_forward_commands + 1
                     index_command_string = index_command_string + 1
                 index_command_string = index_command_string - 1
-                if not self.go_straight(distance = ((0.305*count_forward_commands) + ((0.305/2) * count_half_forward_commands))):
-                    return executed_commands
-
+                self.go_straight(distance=((0.305 * count_forward_commands) +
+                                 ((0.305 / 2) * count_half_forward_commands)))
 
             if command_string[index_command_string] == 'f':
                 count_forward_commands = 0
@@ -329,36 +401,36 @@ class TankControls:
                     if command_string[index_command_string] == 'F':
                         count_forward_commands = count_forward_commands + 1
                     elif command_string[index_command_string] == 'f':
-                        count_half_forward_commands =  count_half_forward_commands + 1
+                        count_half_forward_commands = count_half_forward_commands + 1
                     index_command_string = index_command_string + 1
                 index_command_string = index_command_string - 1
-                if not self.go_straight(speed=250, distance = ((0.305*count_forward_commands) + ((0.305/2) * count_half_forward_commands))):
-                    return executed_commands
-                
+                self.go_straight(speed=250, distance=(
+                    (0.305 * count_forward_commands) + ((0.305 / 2) * count_half_forward_commands)))
+
             if command_string[index_command_string] == 'L':
                 self.go_left()
             if command_string[index_command_string] == 'R':
                 self.go_right()
 
-            executed_commands += (command_string[index_command_string])
-            
             index_command_string = index_command_string + 1
 
-        return executed_commands
 
 if __name__ == "__main__":
     # init = TankControls()
+    #     init = Localization((0,0), 'S')
+    #     init.explore("F F F F")
     # make_a_map = True
     # cntTiles = 1
 
-    # # myMap = np.zeros((7,7))
-    # # print(myMap)
-    # # world = Workspace()
-    # # x, y = 0, 0
-    # # while True:
-    #     # init.repositionUltrasonicSensor()
-    #     # if make_a_map == True:
-    #         # if cntTiles < 43:
+    # myMap = np.zeros((7,7))
+    # print(myMap)
+    # world = Workspace()
+    # x, y = 0, 0
+    # while True:
+    # init.repositionUltrasonicSensor()
+    # if make_a_map == True:
+    # if cntTiles < 43:
+    # for i in range(5):
     # leftVal = init.scan_left()
     # frontVal = init.scan_forward()
     # rightVal = init.scan_right()
@@ -366,12 +438,9 @@ if __name__ == "__main__":
     # print("tilesInFront: ", int(frontVal/300))
     # print("tilesOnTheRight: ", int(rightVal/300))
     # init.returnToPosition()
-    #             # if init.sense_color("red") or init.sense_color("blue") or init.sense_color("green"):
-    #                 # init.go_backwards()
-    #         # init.captureBlock()
-    #         # init.go_straight()
-    #     # init.releaseBlock()
-
-    init = Localization((0,0), 'S')
-    init.explore()
-    init.printCurrentCoordinate()
+    # if init.sense_color("red") or init.sense_color("blue") or init.sense_color("green"):
+    # init.go_backwards()
+    init.releaseBlock()
+    wait(2000)
+    init.captureBlock()
+    # init.go_straight()
