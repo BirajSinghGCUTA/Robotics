@@ -357,7 +357,7 @@ class TankControls:
             for n in range(forward_tile_count):
                 self.go_straight()
             self.go_right()
-            ##################TODO#########
+            self.followLeftWall()
         if hemi == 'b':
             self.go_left()
             self.go_left()
@@ -370,7 +370,7 @@ class TankControls:
             for n in range(forward_tile_count):
                 self.go_straight()
             self.go_left()
-            # TODO
+            self.followRightWall()
 
     def execute_commands(self, command_string):
         """
